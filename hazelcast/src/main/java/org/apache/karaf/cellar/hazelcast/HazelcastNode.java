@@ -38,9 +38,9 @@ public class HazelcastNode implements Node {
         this.id = builder.append(host).append(":").append(port).toString();
     }
 
-    static String getHostString(InetSocketAddress socketAddress) {
-      InetAddress address = socketAddress.getAddress();
-      return (address != null) ? address.getHostAddress() : socketAddress.getHostName();
+    static String getHostString(InetSocketAddress socketAddr) {
+      InetAddress addr = socketAddr.getAddress();
+      return (addr != null && addr.toString().startsWith("/")) ? addr.getHostAddress() : socketAddr.getHostName();
     }
 
     @Override
