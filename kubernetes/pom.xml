@@ -72,7 +72,7 @@
                             org.apache.karaf.cellar.kubernetes.*;version="${project.version}"
                         </Export-Package>
                         <Import-Package>
-                            io.fabric8.kubernetes.api;version="2.3.0",
+                            io.fabric8.kubernetes.api;version="${fabric8.version}",
                             org.apache.karaf.cellar.core*;version="${project.version}",
                             org.osgi*,
                             org.slf4j;version="[1.6,2)";resolution:=optional
