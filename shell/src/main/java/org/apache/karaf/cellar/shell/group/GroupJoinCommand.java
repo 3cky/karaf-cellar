@@ -36,7 +36,6 @@ public class GroupJoinCommand extends GroupSupport {
             System.err.println("Cluster group " + groupName + " doesn't exist");
             return null;
         }
-
         return doExecute(ManageGroupAction.JOIN, groupName, null, nodes,false);
     }
 
