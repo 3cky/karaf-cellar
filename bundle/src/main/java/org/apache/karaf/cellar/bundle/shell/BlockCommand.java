@@ -39,7 +39,6 @@ public class BlockCommand extends BundleCommandSupport {
     boolean blacklist = false;
 
     public Object doExecute() throws Exception {
-
         Group group = groupManager.findGroupByName(groupName);
         if (group == null) {
             System.err.println("Cluster group " + groupName + " doesn't exist");
@@ -52,7 +51,7 @@ public class BlockCommand extends BundleCommandSupport {
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
 
         try {
-            Map<String, ExtendedBundleState> bundles = gatherBundles();
+            Map<String, ExtendedBundleState> bundles = gatherBundles(false);
             List<String> selectedBundles = selector(bundles);
             for (String selectedBundle : selectedBundles) {
                 patterns.add(bundles.get(selectedBundle).getLocation());
