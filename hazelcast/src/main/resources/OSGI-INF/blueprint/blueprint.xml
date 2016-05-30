@@ -15,6 +15,12 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
         xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.0.0">
 
+    <!-- Cellar Extender -->
+    <bean id="cellarExtender" class="org.apache.karaf.cellar.hazelcast.CellarExtender"  init-method="init" destroy-method="destroy">
+        <property name="combinedClassLoader" ref="combinedClassLoader"/>
+        <property name="bundleContext" ref="blueprintBundleContext"/>
+    </bean>
+
     <bean id="hazelcast" class="com.hazelcast.core.Hazelcast" factory-ref="instanceFactory"
           factory-method="getInstance" destroy-method="shutdown"/>
     <service ref="hazelcast" interface="com.hazelcast.core.HazelcastInstance"/>
@@ -27,7 +33,7 @@
         <cm:managed-properties persistent-id="org.apache.karaf.cellar.discovery" update-strategy="component-managed"
                                   update-method="update"/>
     </bean>
-    
+
     <bean id="hazelcastConfigurationManager" class="org.apache.karaf.cellar.hazelcast.factory.HazelcastConfigurationManager" >
         <property name="discoveryServices" ref="discoveryServices"/>
     </bean>
@@ -76,12 +82,6 @@
         <property name="configurationAdmin" ref="configurationAdmin"/>
     </bean>
     <service ref="eventTransportFactory" interface="org.apache.karaf.cellar.core.event.EventTransportFactory"/>
-
-    <!-- Cellar Extender -->
-    <bean id="cellarExtender" class="org.apache.karaf.cellar.hazelcast.CellarExtender"  init-method="init" destroy-method="destroy">
-        <property name="combinedClassLoader" ref="combinedClassLoader"/>
-        <property name="bundleContext" ref="blueprintBundleContext"/>
-    </bean>
 
     <!-- Bundle Combined ClassLoader -->
     <bean id="combinedClassLoader" class="org.apache.karaf.cellar.core.utils.CombinedClassLoader" init-method="init" destroy-method="destroy"/>
