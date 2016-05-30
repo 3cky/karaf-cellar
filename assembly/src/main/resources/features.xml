@@ -35,7 +35,7 @@
     <feature name="cellar-hazelcast" description="Cellar implementation based on Hazelcast" version="${project.version}" resolver="(obr)">
         <feature version="${hazelcast.version}">hazelcast</feature>
         <feature version="${project.version}">cellar-core</feature>
-        <bundle start-level="70">mvn:org.apache.karaf.cellar/org.apache.karaf.cellar.hazelcast/${project.version}</bundle>
+        <bundle start-level="65">mvn:org.apache.karaf.cellar/org.apache.karaf.cellar.hazelcast/${project.version}</bundle>
     </feature>
 
     <feature name="cellar-config" description="ConfigAdmin cluster support" version="${project.version}" resolver="(obr)">
