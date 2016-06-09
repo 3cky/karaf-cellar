@@ -18,10 +18,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.karaf.cellar.core.utils.CombinedClassLoader;
+
 /**
  * Cluster manager interface.
  */
 public interface ClusterManager {
+
+    /**
+     * Get class loader which combines multiple bundle class loaders.
+     *
+     * @return combined class loader.
+     * @author 3cky
+     */
+    public CombinedClassLoader getCombinedClassLoader();
 
     /**
      * Get a map in the cluster.

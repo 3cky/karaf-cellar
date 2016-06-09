@@ -231,6 +231,7 @@ public class HazelcastClusterManager extends HazelcastInstanceAware implements C
         this.configurationAdmin = configurationAdmin;
     }
 
+    @Override
     public CombinedClassLoader getCombinedClassLoader() {
         return combinedClassLoader;
     }
