@@ -14,6 +14,7 @@
 package org.apache.karaf.cellar.event;
 
 import org.apache.karaf.cellar.core.Group;
+import org.apache.karaf.cellar.core.Node;
 import org.apache.karaf.cellar.core.control.SwitchStatus;
 import org.apache.karaf.cellar.core.event.EventProducer;
 import org.apache.karaf.cellar.core.event.EventType;
@@ -64,12 +65,14 @@ public class LocalEventListener extends EventSupport implements EventHandler {
                 }
 
                 if (groups != null && !groups.isEmpty()) {
+                    Node node = getClusterManager().getNode();
                     for (Group group : groups) {
                         String topicName = event.getTopic();
                         Map<String, Serializable> properties = getEventProperties(event);
                         if (isAllowed(group, Constants.CATEGORY, topicName, EventType.OUTBOUND)) {
                             // broadcast the event
                             ClusterEvent clusterEvent = new ClusterEvent(topicName, properties);
+                            clusterEvent.setSourceNode(node);
                             clusterEvent.setSourceGroup(group);
                             eventProducer.produce(clusterEvent);
                         } else LOGGER.trace("CELLAR EVENT: event {} is marked as BLOCKED OUTBOUND for cluster group {}", topicName, group.getName());
