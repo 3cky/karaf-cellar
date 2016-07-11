@@ -13,6 +13,7 @@
  */
 package org.apache.karaf.cellar.features;
 
+import org.apache.karaf.cellar.core.Node;
 import org.apache.karaf.cellar.core.event.Event;
 import org.apache.karaf.features.RepositoryEvent.EventType;
 
@@ -24,6 +25,8 @@ public class ClusterRepositoryEvent extends Event {
 	private EventType type;
     private Boolean install;
     private Boolean uninstall;
+    private Boolean refresh;
+    private Node local;
 
     public ClusterRepositoryEvent(String id, EventType type) {
         super(id);
@@ -50,6 +53,22 @@ public class ClusterRepositoryEvent extends Event {
         this.uninstall = uninstall;
     }
 
+    public Boolean getRefresh() {
+        return refresh;
+    }
+
+    public void setRefresh(Boolean refresh) {
+        this.refresh = refresh;
+    }
+
+    public Node getLocal() {
+        return local;
+    }
+
+    public void setLocal(Node local) {
+        this.local = local;
+    }
+
     @Override
 	public String toString() {
 		return "ClusterRepositoryEvent [type=" + type + ", id=" + id
@@ -57,5 +76,5 @@ public class ClusterRepositoryEvent extends Event {
 				+ ", destination=" + destination + ", force=" + force
 				+ ", postPublish=" + postPublish + "]";
 	}
-    
+
 }
