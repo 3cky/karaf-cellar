@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,29 +39,35 @@ public class HazelcastConfigurationManager {
 
     private String xmlConfigLocation = System.getProperty("karaf.etc") + File.separator + "hazelcast.xml";
 
-    private Set<String> discoveredMemberSet = new LinkedHashSet<String>();
+    private Set<String> discoveredMembers = new LinkedHashSet<String>();
     private List<DiscoveryService> discoveryServices;
+
+    private Config config = null;
+    private List<String> configMembers;
 
     /**
      * Build a Hazelcast {@link com.hazelcast.config.Config}.
      *
      * @return the Hazelcast configuration.
      */
-    public Config getHazelcastConfig() {
-        System.setProperty("hazelcast.config", xmlConfigLocation);
-        Config config = new XmlConfigBuilder().build();
-        
-        if (config.getNetworkConfig().getJoin().getTcpIpConfig().isEnabled() && discoveredMemberSet != null) {
-            if (discoveryServices != null && !discoveryServices.isEmpty()) {
-                for (DiscoveryService service : discoveryServices) {
-                    service.refresh();
-                    Set<String> discovered = service.discoverMembers();
-                    discoveredMemberSet.addAll(discovered);
-                    LOGGER.trace("HAZELCAST STARTUP DISCOVERY: service {} found members {}", service, discovered);
-                }
-            }
+    public synchronized Config getHazelcastConfig() {
+        if (config == null) {
+            System.setProperty("hazelcast.config", xmlConfigLocation);
+            config = new XmlConfigBuilder().build();
             TcpIpConfig tcpIpConfig = config.getNetworkConfig().getJoin().getTcpIpConfig();
-            tcpIpConfig.getMembers().addAll(discoveredMemberSet);
+            if (tcpIpConfig.isEnabled()) {
+                configMembers = Collections.unmodifiableList(tcpIpConfig.getMembers());
+                if (discoveryServices != null && !discoveryServices.isEmpty()) {
+                    for (DiscoveryService service : discoveryServices) {
+                        service.refresh();
+                        Set<String> discovered = service.discoverMembers();
+                        discoveredMembers.addAll(discovered);
+                        LOGGER.trace("HAZELCAST STARTUP DISCOVERY: service {} found members {}",
+                                service, discovered);
+                    }
+                }
+                tcpIpConfig.getMembers().addAll(discoveredMembers);
+            }
         }
         return config;
     }
@@ -69,22 +76,41 @@ public class HazelcastConfigurationManager {
      * Update configuration of a Hazelcast instance.
      *
      * @param properties the updated configuration properties.
+     * @return <code>true</code> if configuration was changed, <code>false</code> otherwise
      */
     public boolean isUpdated(Map properties) {
-        Boolean updated = Boolean.FALSE;
-        if (properties != null) {
-            if (properties.containsKey(Discovery.DISCOVERED_MEMBERS_PROPERTY_NAME)) {
-                Set<String> newDiscoveredMemberSet = CellarUtils.createSetFromString((String) properties.get(Discovery.DISCOVERED_MEMBERS_PROPERTY_NAME));
-                if (!CellarUtils.collectionEquals(discoveredMemberSet, newDiscoveredMemberSet)) {
-                    LOGGER.debug("Hazelcast discoveredMemberSet has been changed from {} to {}", discoveredMemberSet, newDiscoveredMemberSet);
-                    discoveredMemberSet = newDiscoveredMemberSet;
-                    updated = Boolean.TRUE;
+        boolean updated = false;
+        if (properties != null && properties.containsKey(Discovery.DISCOVERED_MEMBERS_PROPERTY_NAME)) {
+            Set<String> newDiscoveredMemberSet = CellarUtils.createSetFromString(
+                    (String) properties.get(Discovery.DISCOVERED_MEMBERS_PROPERTY_NAME));
+            synchronized (this) {
+                if (!CellarUtils.collectionEquals(discoveredMembers, newDiscoveredMemberSet)) {
+                    LOGGER.debug("Hazelcast discoveredMemberSet has been changed from {} to {}",
+                            discoveredMembers, newDiscoveredMemberSet);
+                    discoveredMembers = newDiscoveredMemberSet;
+                    updateHazelcastTcpIpMembers();
+                    updated = true;
                 }
             }
         }
         return updated;
     }
-    
+
+    /**
+     * Update Hazelcast TCP/IP members list with discovered members, if applicable.
+     */
+    private void updateHazelcastTcpIpMembers() {
+        if (config != null) {
+            TcpIpConfig tcpIpConfig = config.getNetworkConfig().getJoin().getTcpIpConfig();
+            if (tcpIpConfig.isEnabled()) {
+                List<String> members = tcpIpConfig.getMembers();
+                members.clear();
+                members.addAll(configMembers);
+                members.addAll(discoveredMembers);
+            }
+        }
+    }
+
     public void setDiscoveryServices(List<DiscoveryService> discoveryServices) {
         this.discoveryServices = discoveryServices;
     }
