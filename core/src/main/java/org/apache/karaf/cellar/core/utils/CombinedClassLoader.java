@@ -27,6 +27,10 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class CombinedClassLoader extends ClassLoader {
 
+    static {
+        ClassLoader.registerAsParallelCapable();
+    }
+
     private final ConcurrentMap<Long, Bundle> bundles = new ConcurrentHashMap<Long, Bundle>();
 
     private final ConcurrentMap<String, Bundle> classBundleCache = new ConcurrentHashMap<String, Bundle>();
