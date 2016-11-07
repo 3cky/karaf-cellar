@@ -95,7 +95,7 @@ public class QueueConsumer<E extends Event> implements EventConsumer<E>, ItemLis
                 try {
                     E e = null;
                     try {
-                        e = getQueue().poll(10, TimeUnit.SECONDS);
+                        e = getQueue().poll(30, TimeUnit.SECONDS);
                     } catch (InterruptedException e1) {
                         LOGGER.warn("CELLAR HAZELCAST: consume task interrupted");
                     }
