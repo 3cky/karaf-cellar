@@ -90,14 +90,14 @@ public class QueueConsumer<E extends Event> implements EventConsumer<E>, ItemLis
             } else Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
             e = null;
             try {
-                e = getQueue().poll(10, TimeUnit.SECONDS);
+                e = getQueue().poll(30, TimeUnit.SECONDS);
             } catch (InterruptedException e1) {
                 LOGGER.warn("CELLAR HAZELCAST: consume task interrupted");
             } catch (Exception e2) {
                 // catch everything from Hazelcast to prevent the death of Queue Consumer task
                 LOGGER.warn("CELLAR HAZELCAST: consumer task failed to poll the queue", e2);
             }
-            
+
             try {
                 if (e != null) {
                     consume(e);
@@ -109,7 +109,7 @@ public class QueueConsumer<E extends Event> implements EventConsumer<E>, ItemLis
                 LOGGER.error("CELLAR HAZELCAST: failed to consume from queue", e1);
             }
         }
-        
+
         Thread.currentThread().setContextClassLoader(originalClassLoader);
     }
 
