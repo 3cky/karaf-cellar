@@ -21,7 +21,9 @@ import org.apache.karaf.cellar.core.exception.StoreNotFoundException;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Clustered execution context.
@@ -31,7 +33,33 @@ public class ClusteredExecutionContext implements ExecutionContext {
     private Producer producer;
     private CommandStore commandStore;
 
-    private ScheduledExecutorService timeoutScheduler = new ScheduledThreadPoolExecutor(10);
+    private ScheduledExecutorService timeoutScheduler;
+
+    static class ClusteredExecutionContextTimeoutSchedulerThreadFactory implements ThreadFactory {
+        private static final AtomicInteger poolNumber = new AtomicInteger(1);
+        private final ThreadGroup group;
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final String namePrefix;
+
+        ClusteredExecutionContextTimeoutSchedulerThreadFactory() {
+            SecurityManager s = System.getSecurityManager();
+            group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+            namePrefix = "ClusteredExecutionContextTimeoutScheduler-" +
+                    poolNumber.getAndIncrement() + "-thread-";
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
+            if (t.isDaemon()) {
+                t.setDaemon(false);
+            }
+            if (t.getPriority() != Thread.NORM_PRIORITY) {
+                t.setPriority(Thread.NORM_PRIORITY);
+            }
+            return t;
+        }
+    }
 
     public ClusteredExecutionContext() {
         // nothing to do
@@ -40,6 +68,8 @@ public class ClusteredExecutionContext implements ExecutionContext {
     public ClusteredExecutionContext(Producer producer, CommandStore commandStore) {
         this.producer = producer;
         this.commandStore = commandStore;
+        this.timeoutScheduler = new ScheduledThreadPoolExecutor(1,
+                new ClusteredExecutionContextTimeoutSchedulerThreadFactory());
     }
 
     @Override
