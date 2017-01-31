@@ -62,14 +62,14 @@ public class ClusteredExecutionContext implements ExecutionContext {
     }
 
     public ClusteredExecutionContext() {
-        // nothing to do
+        this.timeoutScheduler = new ScheduledThreadPoolExecutor(1,
+                new ClusteredExecutionContextTimeoutSchedulerThreadFactory());
     }
 
     public ClusteredExecutionContext(Producer producer, CommandStore commandStore) {
+        this();
         this.producer = producer;
         this.commandStore = commandStore;
-        this.timeoutScheduler = new ScheduledThreadPoolExecutor(1,
-                new ClusteredExecutionContextTimeoutSchedulerThreadFactory());
     }
 
     @Override
