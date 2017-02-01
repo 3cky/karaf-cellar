@@ -37,6 +37,7 @@ import javax.inject.Inject;
 
 import org.apache.felix.service.command.CommandProcessor;
 import org.apache.felix.service.command.CommandSession;
+import org.apache.sshd.agent.SshAgent;
 import org.ops4j.pax.exam.*;
 import org.ops4j.pax.exam.karaf.options.*;
 import org.osgi.framework.Bundle;
@@ -181,7 +182,9 @@ public class CellarTestSupport {
         Option[] options = new Option[]{
                 cellarDistributionConfiguration(), keepRuntimeFolder(), logLevel(LogLevelOption.LogLevel.INFO),
                 editConfigurationFileExtend("etc/system.properties", "cellar.feature.url", maven().groupId("org.apache.karaf.cellar").artifactId("apache-karaf-cellar").versionAsInProject().classifier("features").type("xml").getURL()),
-                editConfigurationFileExtend("etc/config.properties", "org.apache.aries.blueprint.synchronous", "true")
+                editConfigurationFileExtend("etc/config.properties", "org.apache.aries.blueprint.synchronous", "true"),
+                // Disable container security
+                editConfigurationFilePut("etc/system.properties", "karaf.secured.services", "(osgi.none=*)")
         };
         String debug = System.getProperty("debugMain");
         if (debug != null) {
