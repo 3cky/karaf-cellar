@@ -68,7 +68,7 @@ public interface GroupManager {
 
     /**
      * Check if a given cluster group is a local one.
-     * A "local" clsuter group means a cluster group where the local node is belonging.
+     * A "local" cluster group means a cluster group where the local node is belonging.
      *
      * @param groupName the cluster group name.
      * @return true if the cluster group is a local one, false else.
@@ -106,31 +106,16 @@ public interface GroupManager {
     public Set<String> listGroupNames(Node node);
 
     /**
-     * Register the local node in a given cluster group.
+     * Add {@link Node} to the target {@link Group}.
      *
-     * @param group the cluster group to join.
+     * @param groupName the cluster group name where to add the node.
      */
-    public void registerGroup(Group group);
+    public void joinGroup(String groupName);
 
     /**
-     * Register the locla node in a given cluster group.
+     * Remove a {@link Node} from the target {@link Group}.
      *
-     * @param groupName the cluster group name to join.
+     * @param groupName the cluster group name where to remove the node.
      */
-    public void registerGroup(String groupName);
-
-    /**
-     * Un-register the local node from a given cluster group.
-     *
-     * @param group the cluster group to quit.
-     */
-    public void unRegisterGroup(Group group);
-
-    /**
-     * Un-register the local node from a given cluster group.
-     *
-     * @param groupName the cluster group name to quite.
-     */
-    public void unRegisterGroup(String groupName);
-
+    public void quitGroup(String groupName);
 }

@@ -13,13 +13,12 @@
  */
 package org.apache.karaf.cellar.core.control;
 
+import java.util.Set;
+
 import org.apache.karaf.cellar.core.Configurations;
 import org.apache.karaf.cellar.core.Group;
 import org.apache.karaf.cellar.core.Node;
 import org.apache.karaf.cellar.core.command.CommandHandler;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Manager group command handler.
@@ -38,19 +37,19 @@ public class ManageGroupCommandHandler extends CommandHandler<ManageGroupCommand
         String targetGroupName = command.getGroupName();
 
         if (ManageGroupAction.JOIN.equals(action)) {
-            joinGroup(targetGroupName);
+            groupManager.joinGroup(targetGroupName);
         } else if (ManageGroupAction.QUIT.equals(action)) {
-            quitGroup(targetGroupName);
+            groupManager.quitGroup(targetGroupName);
             if (groupManager.listLocalGroups().isEmpty()) {
-                joinGroup(Configurations.DEFAULT_GROUP_NAME);
+                groupManager.joinGroup(Configurations.DEFAULT_GROUP_NAME);
             }
         } else if (ManageGroupAction.PURGE.equals(action)) {
             purgeGroups();
-            joinGroup(Configurations.DEFAULT_GROUP_NAME);
+            groupManager.joinGroup(Configurations.DEFAULT_GROUP_NAME);
         } else if (ManageGroupAction.SET.equals(action)) {
             Group localGroup = groupManager.listLocalGroups().iterator().next();
-            quitGroup(localGroup.getName());
-            joinGroup(targetGroupName);
+            groupManager.quitGroup(localGroup.getName());
+            groupManager.joinGroup(targetGroupName);
         }
 
         addGroupListToResult(result);
@@ -74,43 +73,6 @@ public class ManageGroupCommandHandler extends CommandHandler<ManageGroupCommand
     }
 
     /**
-     * Add {@link Node} to the target {@link Group}.
-     *
-     * @param targetGroupName the target group name where to add the node.
-     */
-    public void joinGroup(String targetGroupName) {
-        Node node = clusterManager.getNode();
-        Map<String, Group> groups = groupManager.listGroups();
-        if (groups != null && !groups.isEmpty()) {
-            Group targetGroup = groups.get(targetGroupName);
-            if (targetGroup == null) {
-                groupManager.registerGroup(targetGroupName);
-            } else if (!targetGroup.getNodes().contains(node)) {
-                targetGroup.getNodes().add(node);
-                groupManager.listGroups().put(targetGroupName, targetGroup);
-                groupManager.registerGroup(targetGroup);
-            }
-        }
-    }
-
-    /**
-     * Remove a {@link Node} from the target {@link Group}.
-     *
-     * @param targetGroupName the target group name where to remove the node.
-     */
-    public void quitGroup(String targetGroupName) {
-        Node node = clusterManager.getNode();
-        Map<String, Group> groups = groupManager.listGroups();
-        if (groups != null && !groups.isEmpty()) {
-            Group targetGroup = groups.get(targetGroupName);
-            if (targetGroup.getNodes().contains(node)) {
-                targetGroup.getNodes().remove(node);
-                groupManager.unRegisterGroup(targetGroup);
-            }
-        }
-    }
-
-    /**
      * Remove {@link Node} from all {@link Group}s.
      */
     public void purgeGroups() {
@@ -118,7 +80,7 @@ public class ManageGroupCommandHandler extends CommandHandler<ManageGroupCommand
         Set<String> groupNames = groupManager.listGroupNames(node);
         if (groupNames != null && !groupNames.isEmpty()) {
             for (String targetGroupName : groupNames) {
-                quitGroup(targetGroupName);
+                groupManager.quitGroup(targetGroupName);
             }
         }
     }
