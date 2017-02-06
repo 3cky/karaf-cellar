@@ -74,7 +74,6 @@ public class LocalEventListener extends EventSupport implements EventHandler {
                             ClusterEvent clusterEvent = new ClusterEvent(topicName, properties);
                             clusterEvent.setSourceNode(node);
                             clusterEvent.setSourceGroup(group);
-                            clusterEvent.setSourceNode(clusterManager.getNode());
                             clusterEvent.setLocal(clusterManager.getNode());
                             eventProducer.produce(clusterEvent);
                         } else LOGGER.trace("CELLAR EVENT: event {} is marked as BLOCKED OUTBOUND for cluster group {}", topicName, group.getName());
