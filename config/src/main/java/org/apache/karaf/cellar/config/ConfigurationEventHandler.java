@@ -25,6 +25,8 @@ import org.osgi.service.cm.ConfigurationEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hazelcast.core.IMap;
+
 import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Map;
@@ -49,7 +51,7 @@ public class ConfigurationEventHandler extends ConfigurationSupport implements E
             LOGGER.debug("CELLAR CONFIG: {} switch is OFF, cluster event not handled", SWITCH_ID);
             return;
         }
-        
+
         if (groupManager == null) {
         	//in rare cases for example right after installation this happens!
         	LOGGER.error("CELLAR CONFIG: retrieved event {} while groupManager is not available yet!", event);
@@ -71,13 +73,13 @@ public class ConfigurationEventHandler extends ConfigurationSupport implements E
         Group group = event.getSourceGroup();
         String groupName = group.getName();
 
-        Map<String, Properties> clusterConfigurations = clusterManager.getMap(Constants.CONFIGURATION_MAP + Configurations.SEPARATOR + groupName);
+        IMap<String, Properties> clusterConfigurations = (IMap<String, Properties>)
+                clusterManager.getMap(Constants.CONFIGURATION_MAP + Configurations.SEPARATOR + groupName);
 
         String pid = event.getId();
 
         if (isAllowed(event.getSourceGroup(), Constants.CATEGORY, pid, EventType.INBOUND)) {
-
-            Properties clusterDictionary = clusterConfigurations.get(pid);
+            clusterConfigurations.lock(pid);
             try {
                 // update the local configuration
                 Configuration[] localConfigurations = configurationAdmin.listConfigurations("(service.pid=" + pid + ")");
@@ -88,6 +90,7 @@ public class ConfigurationEventHandler extends ConfigurationSupport implements E
                         deleteStorage(pid);
                     }
                 } else {
+                    Properties clusterDictionary = clusterConfigurations.get(pid);
                     if (clusterDictionary != null) {
                         Configuration localConfiguration = configurationAdmin.getConfiguration(pid, null);
                         Dictionary localDictionary = localConfiguration.getProperties();
@@ -102,6 +105,8 @@ public class ConfigurationEventHandler extends ConfigurationSupport implements E
                 }
             } catch (Exception ex) {
                 LOGGER.error("CELLAR CONFIG: failed to read cluster configuration", ex);
+            } finally {
+                clusterConfigurations.unlock(pid);
             }
         } else LOGGER.trace("CELLAR CONFIG: configuration PID {} is marked BLOCKED INBOUND for cluster group {}", pid, groupName);
     }

@@ -50,6 +50,11 @@
             <artifactId>org.apache.karaf.shell.core</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.karaf.cellar</groupId>
+            <artifactId>org.apache.karaf.cellar.hazelcast</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.utils</artifactId>
         </dependency>
@@ -98,6 +103,7 @@
                         <Import-Package>
                             org.slf4j;version="[1.6,2)";resolution:=optional,
                             org.apache.karaf.shell*;resolution:=optional,
+                            com.hazelcast.core,
                             *
                         </Import-Package>
                         <Private-Package>
