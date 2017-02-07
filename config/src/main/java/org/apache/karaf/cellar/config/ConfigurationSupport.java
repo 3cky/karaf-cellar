@@ -85,16 +85,29 @@ public class ConfigurationSupport extends CellarSupport {
             if (targetValue == null) {
                 return false;
             }
-            if (sourceValue instanceof Object[]) {
-                if (!(targetValue instanceof Object[])) {
-                    return false;
-                }
-                Object[] sourceValues = (Object[]) sourceValue;
-                Object[] targetValues = (Object[]) targetValue;
-                if (!Arrays.equals(sourceValues, targetValues)) {
-                    return false;
-                }
-            } else if (!sourceValue.equals(targetValue)) {
+            boolean eq;
+            if (sourceValue instanceof Object[] && targetValue instanceof Object[]) {
+                eq = Arrays.equals((Object[]) sourceValue, (Object[]) targetValue);
+            } else if (sourceValue instanceof byte[] && targetValue instanceof byte[]) {
+                eq = Arrays.equals((byte[]) sourceValue, (byte[]) targetValue);
+            } else if (sourceValue instanceof short[] && targetValue instanceof short[]) {
+                eq = Arrays.equals((short[]) sourceValue, (short[]) targetValue);
+            } else if (sourceValue instanceof int[] && targetValue instanceof int[]) {
+                eq = Arrays.equals((int[]) sourceValue, (int[]) targetValue);
+            } else if (sourceValue instanceof long[] && targetValue instanceof long[]) {
+                eq = Arrays.equals((long[]) sourceValue, (long[]) targetValue);
+            } else if (sourceValue instanceof char[] && targetValue instanceof char[]) {
+                eq = Arrays.equals((char[]) sourceValue, (char[]) targetValue);
+            } else if (sourceValue instanceof float[] && targetValue instanceof float[]) {
+                eq = Arrays.equals((float[]) sourceValue, (float[]) targetValue);
+            } else if (sourceValue instanceof double[] && targetValue instanceof double[]) {
+                eq = Arrays.equals((double[]) sourceValue, (double[]) targetValue);
+            } else if (sourceValue instanceof boolean[] && targetValue instanceof boolean[]) {
+                eq = Arrays.equals((boolean[]) sourceValue, (boolean[]) targetValue);
+            } else {
+                eq = sourceValue.equals(targetValue);
+            }
+            if (!eq) {
                 return false;
             }
         }
