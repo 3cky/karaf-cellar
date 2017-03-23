@@ -120,7 +120,7 @@ public class HazelcastGroupManager implements GroupManager, EntryListener, Confi
             Set<Group> groups = this.listGroups(local);
             for (Group group : groups) {
                 String groupName = group.getName();
-                quitGroup(groupName);
+                unregisterGroup(groupName, false);
             }
             // shutdown the group consumer/producers
             for (Map.Entry<String, EventConsumer> consumerEntry : groupConsumer.entrySet()) {
@@ -343,11 +343,12 @@ public class HazelcastGroupManager implements GroupManager, EntryListener, Confi
     }
 
     /**
-     * Register a cluster {@link Group}.
+     * Register to a cluster {@link Group}.
      *
-     * @param groupName the cluster group name to register.
+     * @param groupName the cluster group name to register to.
+     * @param updateConfiguration <code>true</code> to update local configuration
      */
-    public void registerGroup(String groupName) {
+    public void registerGroup(String groupName, boolean updateConfiguration) {
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(combinedClassLoader);
@@ -441,7 +442,13 @@ public class HazelcastGroupManager implements GroupManager, EntryListener, Confi
         }
     }
 
-    public void unregisterGroup(String groupName) {
+    /**
+     * Unregister from a cluster {@link Group}.
+     *
+     * @param groupName the cluster group name to unregister from.
+     * @param updateConfiguration <code>true</code> to update local configuration
+     */
+    public void unregisterGroup(String groupName, boolean updateConfiguration) {
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(combinedClassLoader);
@@ -483,22 +490,24 @@ public class HazelcastGroupManager implements GroupManager, EntryListener, Confi
                     consumer.stop();
                 }
 
-                // remove cluster group from configuration
-                try {
-                    Configuration configuration = configurationAdmin.getConfiguration(Configurations.NODE, null);
-                    Dictionary<String, Object> properties = configuration.getProperties();
-                    String groups = (String) properties.get(Configurations.GROUPS_KEY);
-                    if (groups == null || groups.isEmpty()) {
-                        groups = "";
-                    } else if (groups.contains(groupName)) {
-                        Set<String> groupNamesSet = convertStringToSet(groups);
-                        groupNamesSet.remove(groupName);
-                        groups = convertSetToString(groupNamesSet);
+                if (updateConfiguration) {
+                    // remove cluster group from configuration
+                    try {
+                        Configuration configuration = configurationAdmin.getConfiguration(Configurations.NODE, null);
+                        Dictionary<String, Object> properties = configuration.getProperties();
+                        String groups = (String) properties.get(Configurations.GROUPS_KEY);
+                        if (groups == null || groups.isEmpty()) {
+                            groups = "";
+                        } else if (groups.contains(groupName)) {
+                            Set<String> groupNamesSet = convertStringToSet(groups);
+                            groupNamesSet.remove(groupName);
+                            groups = convertSetToString(groupNamesSet);
+                        }
+                        properties.put(Configurations.GROUPS_KEY, groups);
+                        configuration.update(properties);
+                    } catch (IOException e) {
+                        LOGGER.error("CELLAR HAZELCAST: failed to read cluster group configuration", e);
                     }
-                    properties.put(Configurations.GROUPS_KEY, groups);
-                    configuration.update(properties);
-                } catch (IOException e) {
-                    LOGGER.error("CELLAR HAZELCAST: failed to read cluster group configuration", e);
                 }
             } finally {
                 groupMap.unlock(groupName);
@@ -564,7 +573,7 @@ public class HazelcastGroupManager implements GroupManager, EntryListener, Confi
         Map<String, Group> groups = listGroups();
         Group group = groups.get(groupName);
         if (group == null || !group.getNodes().contains(node)) {
-            registerGroup(groupName);
+            registerGroup(groupName, true);
         }
     }
 
@@ -574,7 +583,7 @@ public class HazelcastGroupManager implements GroupManager, EntryListener, Confi
         Map<String, Group> groups = listGroups();
         Group group = groups.get(groupName);
         if (group != null && group.getNodes().contains(node)) {
-            unregisterGroup(groupName);
+            unregisterGroup(groupName, true);
         }
     }
 
@@ -604,8 +613,9 @@ public class HazelcastGroupManager implements GroupManager, EntryListener, Confi
      * @return the Set corresponding to the String.
      */
     protected Set<String> convertStringToSet(String string) {
-    	if (string == null)
-    		return Collections.EMPTY_SET;
+    	if (string == null || string.isEmpty()) {
+    	    return Collections.EMPTY_SET;
+    	}
         Set<String> result = new HashSet<String>();
         String[] groupNames = string.split(",");
 
@@ -643,6 +653,33 @@ public class HazelcastGroupManager implements GroupManager, EntryListener, Confi
                 }
             } catch (Exception e) {
                 LOGGER.warn("CELLAR HAZELCAST: failed to update cluster group configuration", e);
+            }
+        } else if (pid.equals(Configurations.NODE)) {
+            try {
+                // update group membership from configuration
+                Configuration configuration = configurationAdmin.getConfiguration(Configurations.NODE, null);
+                if (configuration != null) {
+                    Dictionary<String, Object> properties = configuration.getProperties();
+                    if (properties != null) {
+                        String groups = (String) properties.get(Configurations.GROUPS_KEY);
+                        Set<String> groupNames = convertStringToSet(groups);
+                        if (groupNames != null && !groupNames.isEmpty()) {
+                            Set<String> localGroupNames = listGroupNames();
+                            // join all new groups
+                            for (String groupName : groupNames) {
+                                if (!localGroupNames.remove(groupName)) {
+                                    registerGroup(groupName, false);
+                                }
+                            }
+                            // quit all groups not listed in updated configuration
+                            for (String groupName : localGroupNames) {
+                                unregisterGroup(groupName, false);
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("CELLAR HAZELCAST: can't update group membership for the current node", e);
             }
         }
     }
