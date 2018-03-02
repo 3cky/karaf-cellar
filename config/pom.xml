@@ -42,17 +42,17 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.karaf.cellar</groupId>
+            <artifactId>org.apache.karaf.cellar.hazelcast</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.karaf</groupId>
             <artifactId>org.apache.karaf.util</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.karaf.shell</groupId>
             <artifactId>org.apache.karaf.shell.core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.hazelcast</groupId>
-            <artifactId>hazelcast-all</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>
