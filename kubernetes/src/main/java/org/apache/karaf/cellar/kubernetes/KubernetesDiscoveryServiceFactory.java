@@ -41,6 +41,7 @@ public class KubernetesDiscoveryServiceFactory implements ManagedServiceFactory 
 
     private static final String KUBERNETES_HOST = "host";
     private static final String KUBERNETES_PORT = "port";
+    private static final String KUBERNETES_SECURE = "secure";
     private static final String KUBERNETES_POD_LABEL_KEY = "pod.label.key";
     private static final String KUBERNETES_POD_LABEL_VALUE = "pod.label.value";
 
@@ -78,11 +79,12 @@ public class KubernetesDiscoveryServiceFactory implements ManagedServiceFactory 
 
                 String kubernetesHost = (String) properties.get(KUBERNETES_HOST);
                 String kubernetesPort = (String) properties.get(KUBERNETES_PORT);
+                String kubernetesIsSecure = (String) properties.get(KUBERNETES_SECURE);
                 if (kubernetesHost == null) {
-                    kubernetesHost = getEnvOrDefault("KUBERNETES_RO_SERVICE_HOST", "localhost");
+                    kubernetesHost = getEnvOrDefault("KUBERNETES_SERVICE_HOST", "localhost");
                 }
                 if (kubernetesPort == null) {
-                    kubernetesPort = getEnvOrDefault("KUBERNETES_RO_SERVICE_PORT", "8080");
+                    kubernetesPort = getEnvOrDefault("KUBERNETES_SERVICE_PORT", "8080");
                 }
                 String kubernetesPodLabelKey = (String) properties.get(KUBERNETES_POD_LABEL_KEY);
                 if (kubernetesPodLabelKey == null) {
@@ -95,6 +97,7 @@ public class KubernetesDiscoveryServiceFactory implements ManagedServiceFactory 
 
                 kubernetesDiscoveryService.setKubernetesHost(kubernetesHost);
                 kubernetesDiscoveryService.setKubernetesPort(kubernetesPort);
+                kubernetesDiscoveryService.setKubernetesIsSecure(Boolean.parseBoolean(kubernetesIsSecure));
                 kubernetesDiscoveryService.setKubernetesPodLabelKey(kubernetesPodLabelKey);
                 kubernetesDiscoveryService.setKubernetesPodLabelValue(kubernetesPodLabelValue);
 

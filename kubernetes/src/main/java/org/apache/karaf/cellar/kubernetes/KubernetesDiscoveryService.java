@@ -24,6 +24,10 @@ import org.apache.karaf.cellar.core.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +43,7 @@ public class KubernetesDiscoveryService implements DiscoveryService {
     private String kubernetesPort;
     private String kubernetesPodLabelKey;
     private String kubernetesPodLabelValue;
+    private boolean kubernetesIsSecure;
 
     private KubernetesClient kubernetesClient;
 
@@ -48,13 +53,43 @@ public class KubernetesDiscoveryService implements DiscoveryService {
 
     public void init() {
         try {
-            String kubernetesUrl = "http://" + kubernetesHost + ":" + kubernetesPort;
-            LOGGER.debug("CELLAR KUBERNETES: query API at {} ...", kubernetesUrl);
+            String kubernetesUrl = (kubernetesIsSecure ? "https" : "http") + "://" + kubernetesHost + ":" + kubernetesPort;
+            LOGGER.info("CELLAR KUBERNETES: query API at {} ...", kubernetesUrl);
             Config config = new ConfigBuilder().withMasterUrl(kubernetesUrl).build();
+            tryConfigureFromServiceAccount(config);
             kubernetesClient = new DefaultKubernetesClient(config);
-            LOGGER.debug("CELLAR KUBERNETES: discovery service initialized");
+            LOGGER.info("CELLAR KUBERNETES: discovery service initialized");
         } catch (Exception e) {
             LOGGER.error("CELLAR KUBERNETES: can't init discovery service", e);
+        }
+    }
+
+    private void tryConfigureFromServiceAccount(Config config) {
+        LOGGER.debug("CELLAR KUBERNETES: trying to configure from service account...");
+        boolean caCertExists = Files.isRegularFile(new File(Config.KUBERNETES_SERVICE_ACCOUNT_CA_CRT_PATH).toPath());
+        if (caCertExists) {
+            LOGGER.info("CELLAR KUBERNETES: Found service account CA cert at: ["
+                    + Config.KUBERNETES_SERVICE_ACCOUNT_CA_CRT_PATH + "]");
+            config.setCaCertFile(Config.KUBERNETES_SERVICE_ACCOUNT_CA_CRT_PATH);
+        } else {
+            LOGGER.debug("CELLAR KUBERNETES: Did not find service account CA cert at: ["
+                    + Config.KUBERNETES_SERVICE_ACCOUNT_CA_CRT_PATH + "]");
+        }
+        Path tokenPath = new File(Config.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH).toPath();
+        boolean tokenExists = Files.isRegularFile(tokenPath);
+        if (!tokenExists) {
+            LOGGER.debug("CELLAR KUBERNETES: Did not find service account token at: ["
+                    + Config.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH + "]");
+            return;
+        }
+        LOGGER.info("CELLAR KUBERNETES: Found service account token at: ["
+                + Config.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH + "]");
+        try {
+            String token = new String(Files.readAllBytes(tokenPath));
+            config.setOauthToken(token);
+        } catch (IOException e) {
+            LOGGER.error("CELLAR KUBERNETES: Error reading service account token from: ["
+                    + Config.KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH + "]");
         }
     }
 
@@ -113,6 +148,14 @@ public class KubernetesDiscoveryService implements DiscoveryService {
 
     public void setKubernetesPort(String kubernetesPort) {
         this.kubernetesPort = kubernetesPort;
+    }
+
+    public boolean getKubernetesIsSecure() {
+        return kubernetesIsSecure;
+    }
+
+    public void setKubernetesIsSecure(boolean kubernetesIsSecure) {
+        this.kubernetesIsSecure = kubernetesIsSecure;
     }
 
     public String getKubernetesPodLabelKey() {
