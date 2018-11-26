@@ -110,7 +110,13 @@ public class KubernetesDiscoveryService implements DiscoveryService {
             for (Pod pod : podList.getItems()) {
                 String value = pod.getMetadata().getLabels().get(kubernetesPodLabelKey);
                 if (value != null && !value.isEmpty() && value.equals(kubernetesPodLabelValue)) {
-                    members.add(pod.getStatus().getPodIP());
+                    String member = pod.getStatus().getPodIP();
+                    if (member != null) {
+                        member = member.trim();
+                        if (!member.isEmpty()) {
+                            members.add(member);
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
