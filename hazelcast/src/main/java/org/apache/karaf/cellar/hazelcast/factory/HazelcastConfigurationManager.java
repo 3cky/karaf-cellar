@@ -35,7 +35,7 @@ import org.apache.karaf.cellar.core.discovery.DiscoveryService;
  */
 public class HazelcastConfigurationManager {
 
-    private static final transient Logger LOGGER = LoggerFactory.getLogger(HazelcastServiceFactory.class);
+    static final transient Logger LOGGER = LoggerFactory.getLogger(HazelcastServiceFactory.class);
 
     private String xmlConfigLocation = System.getProperty("karaf.etc") + File.separator + "hazelcast.xml";
 
@@ -118,6 +118,10 @@ public class HazelcastConfigurationManager {
 
     public void setDiscoveryServices(List<DiscoveryService> discoveryServices) {
         this.discoveryServices = discoveryServices;
+    }
+
+    protected Set<String> getDiscoveredMemberSet() {
+        return discoveredMembers;
     }
 
 }

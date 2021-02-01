@@ -19,6 +19,7 @@ import org.apache.karaf.cellar.core.Synchronizer;
 import org.apache.karaf.cellar.core.control.SwitchStatus;
 import org.apache.karaf.cellar.core.event.EventProducer;
 import org.apache.karaf.cellar.core.event.EventType;
+import org.apache.karaf.cellar.core.utils.CellarUtils;
 import org.apache.karaf.features.*;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.cm.Configuration;
@@ -80,8 +81,7 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
         String policy = getSyncPolicy(group);
         if (policy == null) {
             LOGGER.warn("CELLAR FEATURE: sync policy is not defined for cluster group {}", group.getName());
-        }
-        if (policy.equalsIgnoreCase("cluster")) {
+        } else if (policy.equalsIgnoreCase("cluster")) {
             LOGGER.debug("CELLAR FEATURE: sync policy set as 'cluster' for cluster group {}", group.getName());
             LOGGER.debug("CELLAR FEATURE: updating node from the cluster (pull first)");
             pull(group);
@@ -123,6 +123,7 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
 
                 Map<String, String> clusterRepositories = clusterManager.getMap(Constants.REPOSITORIES_MAP + Configurations.SEPARATOR + groupName);
                 Map<String, FeatureState> clusterFeatures = clusterManager.getMap(Constants.FEATURES_MAP + Configurations.SEPARATOR + groupName);
+                Map<String, Boolean> synchronizers = getSynchronizerMap();
 
                 if (clusterRepositories != null && !clusterRepositories.isEmpty()) {
                     // get the features repositories from the cluster to update locally
@@ -139,7 +140,8 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
                         }
                     }
                     // cleanup the local features repositories not present on the cluster if the node is not the first one in the cluster group
-                    if (clusterManager.listNodesByGroup(group).size() > 1) {
+
+                    if (synchronizers.containsKey(Constants.REPOSITORIES_MAP + Configurations.SEPARATOR + groupName)) {
                         try {
                             for (Repository repository : featuresService.listRepositories()) {
                                 URI uri = repository.getURI();
@@ -162,6 +164,7 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
                 }
 
                 if (clusterFeatures != null && !clusterFeatures.isEmpty()) {
+                    boolean doUninstallFeaturesNotPresentInCluster = CellarUtils.doCleanupResourcesNotPresentInCluster(configurationAdmin) && synchronizers.containsKey(Constants.FEATURES_MAP + Configurations.SEPARATOR + groupName);
                     // get the features from the cluster group and update locally
                     for (FeatureState state : clusterFeatures.values()) {
                         String name = state.getName();
@@ -188,7 +191,7 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
                                 }
                             }
                             // if feature has to be uninstalled locally (and node is not the first one in the cluster group)
-                            if (clusterManager.listNodesByGroup(group).size() > 1 && !clusterInstalled && locallyInstalled) {
+                            if (doUninstallFeaturesNotPresentInCluster && !clusterInstalled && locallyInstalled) {
                                 try {
                                     LOGGER.debug("CELLAR FEATURE: uninstalling feature {}/{}", state.getName(), state.getVersion());
                                     featuresService.uninstallFeature(state.getName(), state.getVersion());
@@ -228,6 +231,7 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
 
                 Map<String, String> clusterRepositories = clusterManager.getMap(Constants.REPOSITORIES_MAP + Configurations.SEPARATOR + groupName);
                 Map<String, FeatureState> clusterFeatures = clusterManager.getMap(Constants.FEATURES_MAP + Configurations.SEPARATOR + groupName);
+                Map<String, Boolean> synchronizers = getSynchronizerMap();
 
                 Repository[] repositoryList = new Repository[0];
                 Feature[] featuresList = new Feature[0];
@@ -243,7 +247,10 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
                 if (repositoryList != null && repositoryList.length > 0) {
                     for (Repository repository : repositoryList) {
                         try {
-                            if (!clusterRepositories.containsKey(repository.getURI().toString())) {
+                            if (repository != null
+                                    && repository.getURI() != null
+                                    && repository.getName() != null
+                                    && !clusterRepositories.containsKey(repository.getURI().toString())) {
                                 LOGGER.debug("CELLAR FEATURE: pushing repository {} in cluster group {}", repository.getName(), groupName);
                                 // updating cluster state
                                 clusterRepositories.put(repository.getURI().toString(), repository.getName());
@@ -261,6 +268,7 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
                         }
                     }
                 }
+                synchronizers.put(Constants.REPOSITORIES_MAP + Configurations.SEPARATOR + groupName, true);
 
                 // push features to the cluster group
                 if (featuresList != null && featuresList.length > 0) {
@@ -313,6 +321,7 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
                         }
                     }
                 }
+                synchronizers.put(Constants.FEATURES_MAP + Configurations.SEPARATOR + groupName, true);
             } finally {
                 Thread.currentThread().setContextClassLoader(originalClassLoader);
             }
@@ -341,7 +350,7 @@ public class FeaturesSynchronizer extends FeaturesSupport implements Synchronize
             LOGGER.error("CELLAR FEATURE: error while retrieving the sync policy", e);
         }
 
-        return "cluster";
+        return null;
     }
 
 }

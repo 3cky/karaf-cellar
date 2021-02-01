@@ -21,14 +21,15 @@
     <feature name="cellar-core" description="Karaf clustering core" version="${project.version}">
         <feature>aries-proxy</feature>
         <feature>shell</feature>
-        <configfile finalname="/etc/org.apache.karaf.cellar.groups.cfg">mvn:org.apache.karaf.cellar/apache-karaf-cellar/${project.version}/cfg/groups</configfile>
-        <configfile finalname="/etc/org.apache.karaf.cellar.node.cfg">mvn:org.apache.karaf.cellar/apache-karaf-cellar/${project.version}/cfg/node</configfile>
+        <configfile finalname="${karaf.etc}/org.apache.karaf.cellar.groups.cfg">mvn:org.apache.karaf.cellar/apache-karaf-cellar/${project.version}/cfg/groups</configfile>
+        <configfile finalname="${karaf.etc}/org.apache.karaf.cellar.node.cfg">mvn:org.apache.karaf.cellar/apache-karaf-cellar/${project.version}/cfg/node</configfile>
         <bundle>mvn:org.apache.karaf.cellar/org.apache.karaf.cellar.core/${project.version}</bundle>
     </feature>
 
     <feature name="hazelcast" description="In memory data grid" version="${hazelcast.version}">
-        <configfile finalname="/etc/hazelcast.xml">mvn:org.apache.karaf.cellar/apache-karaf-cellar/${project.version}/xml/hazelcast</configfile>
-        <bundle>mvn:org.apache.geronimo.specs/geronimo-jta_1.1_spec/1.1.1</bundle>
+        <configfile finalname="${karaf.etc}/hazelcast.xml">mvn:org.apache.karaf.cellar/apache-karaf-cellar/${project.version}/xml/hazelcast</configfile>
+        <feature>transaction</feature>
+        <bundle>mvn:javax.cache/cache-api/1.1.0</bundle>
         <bundle>mvn:com.eclipsesource.minimal-json/minimal-json/0.9.2</bundle>
         <bundle>mvn:com.hazelcast/hazelcast-all/${hazelcast.version}</bundle>
     </feature>
@@ -165,6 +166,11 @@
             <feature dependency="true">cellar-hazelcast</feature>
             <bundle>mvn:org.apache.karaf.cellar/org.apache.karaf.cellar.log/${project.version}</bundle>
         </conditional>
+    </feature>
+
+    <feature name="cellar-documentation" description="Documentation of Karaf Cellar sub-project in HTML" version="${project.version}">
+        <feature>war</feature>
+        <bundle>mvn:org.apache.karaf.cellar/manual/${project.version}</bundle>
     </feature>
 
 </features>

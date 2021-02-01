@@ -149,6 +149,7 @@ public class CellarBundleMBeanImpl extends StandardMBean implements CellarBundle
             state.setSymbolicName(symbolicName);
             state.setVersion(version);
             state.setId(clusterBundles.size());
+            state.setStartLevel(level);
             state.setLocation(location);
             if (start) {
                 state.setStatus(Bundle.ACTIVE);
@@ -273,7 +274,8 @@ public class CellarBundleMBeanImpl extends StandardMBean implements CellarBundle
 
                 // broadcast the cluster event
                 String[] split = bundle.split("/");
-                ClusterBundleEvent event = new ClusterBundleEvent(split[0], split[1], location, null, Bundle.ACTIVE);
+
+                ClusterBundleEvent event = new ClusterBundleEvent(split[0], split[1], location, state.getStartLevel(), Bundle.ACTIVE);
                 event.setSourceGroup(group);
                 event.setSourceNode(clusterManager.getNode());
                 eventProducer.produce(event);
@@ -327,7 +329,7 @@ public class CellarBundleMBeanImpl extends StandardMBean implements CellarBundle
 
                 // broadcast the cluster event
                 String[] split = bundle.split("/");
-                ClusterBundleEvent event = new ClusterBundleEvent(split[0], split[1], location, null, Bundle.RESOLVED);
+                ClusterBundleEvent event = new ClusterBundleEvent(split[0], split[1], location, state.getStartLevel(), Bundle.RESOLVED);
                 event.setSourceGroup(group);
                 event.setSourceNode(clusterManager.getNode());
                 eventProducer.produce(event);
@@ -535,14 +537,13 @@ public class CellarBundleMBeanImpl extends StandardMBean implements CellarBundle
     }
 
     protected void addMatchingBundles(String nameId, List<String> bundles, Map<String, ExtendedBundleState> clusterBundles) {
-
         // id is a number
         Pattern pattern = Pattern.compile("^\\d+$");
         Matcher matcher = pattern.matcher(nameId);
         if (matcher.matches()) {
-            int idInt = Integer.parseInt(nameId);
+            int id = Integer.parseInt(nameId);
             for (String bundle : clusterBundles.keySet()) {
-                if (clusterBundles.get(bundle).getId() == idInt) {
+                if (clusterBundles.get(bundle).getId() == id) {
                     bundles.add(bundle);
                     break;
                 }
@@ -587,14 +588,26 @@ public class CellarBundleMBeanImpl extends StandardMBean implements CellarBundle
                         if (matcher.matches()) {
                             bundles.add(bundle);
                         } else {
-                            // no match on bundle name, fall back to symbolic name and check if it matches the regex
+                            // no match on bundle name, fall back to id and check if it matches the regex
+                            matcher = namePattern.matcher(bundleSplit[0]);
+                            if (matcher.matches()) {
+                                bundles.add(bundle);
+                            }
+                        }
+                    } else if (state.getSymbolicName() != null) {
+                        // bundle symbolic name is populated, check if it matches the regex
+                        matcher = namePattern.matcher(state.getSymbolicName());
+                        if (matcher.matches()) {
+                            bundles.add(bundle);
+                        } else {
+                            // no match on bundle symbolic name, fall back to id and check if it matches the regex
                             matcher = namePattern.matcher(bundleSplit[0]);
                             if (matcher.matches()) {
                                 bundles.add(bundle);
                             }
                         }
                     } else {
-                        // no bundle name, fall back to symbolic name and check if it matches the regex
+                        // no bundle name, fall back to id and check if it matches the regex
                         matcher = namePattern.matcher(bundleSplit[0]);
                         if (matcher.matches()) {
                             bundles.add(bundle);
@@ -617,15 +630,30 @@ public class CellarBundleMBeanImpl extends StandardMBean implements CellarBundle
                 if (matcher.matches()) {
                     bundles.add(bundle);
                 } else {
-                    // no match on bundle name, fall back to symbolic name and check if it matches the regex
-                    matcher = namePattern.matcher(bundle);
+                    // no match on bundle name, fall back to id and check if it matches the regex
+                    String[] idSplit = bundle.split("/");
+                    matcher = namePattern.matcher(idSplit[0]);
+                    if (matcher.matches()) {
+                        bundles.add(bundle);
+                    }
+                }
+            } else if (state.getSymbolicName() != null) {
+                // bundle symbolic name is populated, check if it matches the regex
+                matcher = namePattern.matcher(state.getSymbolicName());
+                if (matcher.matches()) {
+                    bundles.add(bundle);
+                } else {
+                    // no match on bundle symbolic name, fall back to id and check if it matches the regex
+                    String[] idSplit = bundle.split("/");
+                    matcher = namePattern.matcher(idSplit[0]);
                     if (matcher.matches()) {
                         bundles.add(bundle);
                     }
                 }
             } else {
-                // no bundle name, fall back to symbolic name and check if it matches the regex
-                matcher = namePattern.matcher(bundle);
+                // no bundle name, fall back to id and check if it matches the regex
+                String[] idSplit = bundle.split("/");
+                matcher = namePattern.matcher(idSplit[0]);
                 if (matcher.matches()) {
                     bundles.add(bundle);
                 }

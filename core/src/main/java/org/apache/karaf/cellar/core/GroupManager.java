@@ -106,16 +106,31 @@ public interface GroupManager {
     public Set<String> listGroupNames(Node node);
 
     /**
-     * Add {@link Node} to the target {@link Group}.
+     * Register the local node in a given cluster group.
      *
-     * @param groupName the cluster group name where to add the node.
+     * @param group the cluster group to join.
      */
-    public void joinGroup(String groupName);
+    public void registerGroup(Group group);
 
     /**
-     * Remove a {@link Node} from the target {@link Group}.
+     * Register the locla node in a given cluster group.
      *
-     * @param groupName the cluster group name where to remove the node.
+     * @param groupName the cluster group name to join.
      */
-    public void quitGroup(String groupName);
+    public void registerGroup(String groupName);
+
+    /**
+     * Un-register the local node from a given cluster group.
+     *
+     * @param group the cluster group to quit.
+     */
+    public void unRegisterGroup(Group group);
+
+    /**
+     * Un-register the local node from a given cluster group.
+     *
+     * @param groupName the cluster group name to quite.
+     */
+    public void unRegisterGroup(String groupName);
+
 }

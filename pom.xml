@@ -24,32 +24,33 @@
     <parent>
         <groupId>org.apache</groupId>
         <artifactId>apache</artifactId>
-        <version>18</version>
+        <version>23</version>
         <relativePath />
     </parent>
 
     <groupId>org.apache.karaf</groupId>
     <artifactId>cellar</artifactId>
-    <version>4.1.2-sc-SNAPSHOT</version>
+    <version>4.2.2-sc-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Apache Karaf :: Cellar</name>
 
     <properties>
+        <commons-lang3.version>3.8.1</commons-lang3.version>
         <easymock.version>3.4</easymock.version>
-        <fabric8.kubernetes-client.version>3.1.0</fabric8.kubernetes-client.version>
-        <felix.bundlerepository.version>2.0.6</felix.bundlerepository.version>
-        <felix.utils.version>1.10.0</felix.utils.version>
+        <fabric8.kubernetes-client.version>4.6.3</fabric8.kubernetes-client.version>
+        <felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
+        <felix.utils.version>1.11.0</felix.utils.version>
         <felix.webconsole.version>4.2.14</felix.webconsole.version>
-        <hazelcast.version>3.11</hazelcast.version>
-        <jclouds.version>1.9.1</jclouds.version>
-        <joda-time.version>2.9.1</joda-time.version>
-        <junit.version>4.11</junit.version>
-        <karaf.version>4.1.2</karaf.version>
+        <hazelcast.version>3.12.8</hazelcast.version>
+        <jclouds.version>2.1.2</jclouds.version>
+        <joda-time.version>2.10</joda-time.version>
+        <junit.version>4.13</junit.version>
+        <karaf.version>4.2.8</karaf.version>
         <osgi.version>6.0.0</osgi.version>
         <osgi.compendium.version>5.0.0</osgi.compendium.version>
         <slf4j.version>1.7.7</slf4j.version>
-        <netflix.feign.version>8.13.1</netflix.feign.version>
-        <gson.version>2.3</gson.version>
+        <netflix.feign.version>8.18.0</netflix.feign.version>
+        <gson.version>2.8.5</gson.version>
         <bnd.version.policy>[$(version;==;$(@)),$(version;+;$(@)))</bnd.version.policy>
     </properties>
 
@@ -72,15 +73,16 @@
         <module>dns</module>
         <module>etcd</module>
         <module>webconsole</module>
+        <module>manual</module>
         <module>assembly</module>
         <module>samples</module>
         <module>itests</module>
     </modules>
 
     <scm>
-        <connection>scm:git:https://git-wip-us.apache.org/repos/asf/karaf-cellar.git</connection>
-        <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/karaf-cellar.git</developerConnection>
-        <url>https://git-wip-us.apache.org/repos/asf?p=karaf-cellar.git;a=summary</url>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/karaf-cellar.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/karaf-cellar.git</developerConnection>
+        <url>https://gitbox.apache.org/repos/asf?p=karaf-cellar.git;a=summary</url>
       <tag>HEAD</tag>
   </scm>
 
@@ -303,11 +305,11 @@
                 <version>${joda-time.version}</version>
             </dependency>
 
-            <!--Apache common-lang-->
+            <!-- Apache common-lang3 -->
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>${apache.commons.lang3.version}</version>
+                <version>${commons-lang3.version}</version>
             </dependency>
 
             <!-- Kubernetes -->
@@ -403,7 +405,7 @@
                         <useReleaseProfile>false</useReleaseProfile>
                         <preparationGoals>clean install</preparationGoals>
                         <goals>deploy</goals>
-                        <arguments>-Prelease,deploy,manual</arguments>
+                        <arguments>-Prelease,deploy</arguments>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                     </configuration>
                 </plugin>
@@ -429,7 +431,7 @@
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>5.1.1</version>
                     <extensions>true</extensions>
                     <configuration>
                         <instructions>
@@ -517,7 +519,7 @@
                                     <version>[3,4)</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
-                                    <version>[1.7,1.9)</version>
+                                    <version>[1.8,)</version>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
@@ -578,16 +580,7 @@
 
     <profiles>
         <profile>
-            <id>manual</id>
-            <modules>
-                <module>manual</module>
-            </modules>
-        </profile>
-        <profile>
             <id>release</id>
-            <modules>
-                <module>manual</module>
-            </modules>
             <build>
                 <plugins>
                     <plugin>
