@@ -93,6 +93,9 @@ public class QueueConsumer<E extends Event> implements EventConsumer<E>, ItemLis
                 e = getQueue().poll(30, TimeUnit.SECONDS);
             } catch (InterruptedException e1) {
                 LOGGER.warn("CELLAR HAZELCAST: consume task interrupted");
+            } catch (HazelcastInstanceNotActiveException hex) {
+                LOGGER.debug("CELLAR HAZELCAST: instance not active, stop polling", hex);
+                break;
             } catch (Exception e2) {
                 // catch everything from Hazelcast to prevent the death of Queue Consumer task
                 LOGGER.warn("CELLAR HAZELCAST: consumer task failed to poll the queue", e2);
