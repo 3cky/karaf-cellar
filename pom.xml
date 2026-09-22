@@ -37,6 +37,7 @@
     <properties>
         <project.build.outputTimestamp>1695310533</project.build.outputTimestamp>
         <maven.compiler.target>11</maven.compiler.target>
+        <aries.spifly.version>1.3.7</aries.spifly.version>
         <fabric8.kubernetes-client.version>4.13.3</fabric8.kubernetes-client.version>
         <felix.webconsole.version>4.2.14</felix.webconsole.version>
         <hazelcast.version>3.12.13</hazelcast.version>

@@ -127,7 +127,13 @@
         <bundle>mvn:org.apache.karaf.cellar/org.apache.karaf.cellar.cloud/${project.version}</bundle>
     </feature>
 
+    <feature name="cellar-kubernetes-runtime" description="Cellar Kubernetes runtime dependencies" version="${project.version}">
+        <feature>aries-proxy</feature>
+        <bundle>mvn:org.apache.aries.spifly/org.apache.aries.spifly.dynamic.bundle/${aries.spifly.version}</bundle>
+    </feature>
+
     <feature name="cellar-kubernetes" description="Cellar Kubernetes support" version="${project.version}">
+        <feature prerequisite="true" version="${project.version}">cellar-kubernetes-runtime</feature>
         <feature>cellar-core</feature>
         <feature>kubernetes-client</feature>
         <bundle>mvn:org.apache.karaf.cellar/org.apache.karaf.cellar.kubernetes/${project.version}</bundle>

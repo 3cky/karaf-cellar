@@ -103,6 +103,7 @@
                                 <feature>cellar-obr</feature>
                                 <feature>cellar-eventadmin</feature>
                                 <feature>cellar-cloud</feature>
+                                <feature>cellar-kubernetes</feature>
                                 <feature>cellar-webconsole</feature>
                             </features>
                             <verifyTransitive>false</verifyTransitive>
